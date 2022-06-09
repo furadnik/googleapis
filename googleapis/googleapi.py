@@ -9,7 +9,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/a
 
 def get_service(b, v="v3", get_creds=False, user=""):
     token_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'token.pickle')
-    token_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'creds_new.json')
+    creds_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'creds_new.json')
 
     if not os.path.exists(creds_path):
         return None
