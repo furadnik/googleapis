@@ -8,8 +8,8 @@ import os
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/books', 'https://www.googleapis.com/auth/tasks', 'https://mail.google.com/', 'https://www.googleapis.com/auth/youtube', 'https://www.googleapis.com/auth/calendar']
 
 def get_service(b, v="v3", get_creds=False, user=""):
-    token_path = os.path.join(os.path.dirname(__file__), 'creds', user + 'token.pickle')
-    creds_path = os.path.join(os.path.dirname(__file__), 'creds', user + 'creds_new.json')
+    token_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'token.pickle')
+    token_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'creds_new.json')
 
     if not os.path.exists(creds_path):
         return None
