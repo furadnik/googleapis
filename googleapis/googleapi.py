@@ -1,15 +1,25 @@
 from __future__ import print_function
-import pickle
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-import os
 
-SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/books', 'https://www.googleapis.com/auth/tasks', 'https://mail.google.com/', 'https://www.googleapis.com/auth/youtube', 'https://www.googleapis.com/auth/calendar']
+import os
+import pickle
+
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+SCOPES = [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/books',
+    'https://www.googleapis.com/auth/tasks',
+    'https://mail.google.com/',
+    'https://www.googleapis.com/auth/youtube',
+    'https://www.googleapis.com/auth/calendar'
+]
+
 
 def get_service(b, v="v3", get_creds=False, user=""):
-    token_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'token.pickle')
-    creds_path = os.path.join(os.path.expanduser("~"),'.config', 'tmq', 'googleapis', 'creds', user + 'creds_new.json')
+    token_path = os.path.join(os.path.expanduser("~"), '.config', 'tmq', 'googleapis', 'creds', user + 'token.pickle')
+    creds_path = os.path.join(os.path.expanduser("~"), '.config', 'tmq', 'googleapis', 'creds', user + 'creds_new.json')
 
     if not os.path.exists(creds_path):
         return None
@@ -33,7 +43,8 @@ def get_service(b, v="v3", get_creds=False, user=""):
         with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
 
-    if get_creds:return creds
+    if get_creds:
+        return creds
+
     service = build(b, v, credentials=creds)
     return service
-
