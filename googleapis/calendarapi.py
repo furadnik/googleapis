@@ -78,7 +78,10 @@ def get_dt_from_google(dt):
     return datetime.datetime.strptime(dt, form).replace(tzinfo=None) + dif
 
 
-def create_event(name, start, end=None, description=None, location=None, color=None, calendar_id='primary'):
+def create_event(
+        name, start, end=None, description=None, location=None,
+        color=None, all_day=False, calendar_id='primary'
+):
     """
     COLORS
     1 blue
@@ -100,6 +103,9 @@ def create_event(name, start, end=None, description=None, location=None, color=N
         'start': {'dateTime': get_google_from_dt(start), "timeZone": LOCAL_TIMEZONE},
         'end': {'dateTime': get_google_from_dt(end), "timeZone": LOCAL_TIMEZONE},
     }
+    if all_day:
+        event["start"] = datetime.datetime.strftime(todt(start), "%Y-%m-%d")
+        event["end"] = datetime.datetime.strftime(todt(end), "%Y-%m-%d")
     if description:
         event["description"] = description
     if location:
