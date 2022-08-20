@@ -104,8 +104,8 @@ def create_event(
         'end': {'dateTime': get_google_from_dt(end), "timeZone": LOCAL_TIMEZONE},
     }
     if all_day:
-        event["start"] = datetime.datetime.strftime(todt(start), "%Y-%m-%d")
-        event["end"] = datetime.datetime.strftime(todt(end), "%Y-%m-%d")
+        event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
+        event["end"] = {"date": datetime.datetime.strftime(todt(end), "%Y-%m-%d")}
     if description:
         event["description"] = description
     if location:
