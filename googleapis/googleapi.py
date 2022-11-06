@@ -48,3 +48,25 @@ def get_service(b, v="v3", get_creds=False, user=""):
 
     service = build(b, v, credentials=creds)
     return service
+
+
+class Service:
+    """A google service representation."""
+
+    def __init__(self, b, v="v3", get_creds=False, user="") -> None:
+        """Init service info."""
+        self.b = b
+        self.v = v
+        self.get_creds = get_creds
+        self.user = user
+        self.service = None
+
+    def __call__(self):
+        """Return the googleapis service."""
+        if self.service is None:
+            try:
+                self.service = get_service(self.b, self.v, self.get_creds, self.user)
+            except Exception:
+                print("Google API not working.")
+
+        return self.service

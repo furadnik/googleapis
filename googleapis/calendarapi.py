@@ -24,7 +24,7 @@ def list_events(calendar="primary", date=None, max_results=10, force_day=True):
         timeMax = None
     date = get_google_from_dt(date) + "Z"
 
-    return service.events().list(
+    return service().events().list(
         calendarId=calendar, timeMin=date,
         maxResults=max_results, singleEvents=True,
         orderBy="startTime", timeMax=timeMax,
@@ -113,7 +113,7 @@ def create_event(
     if color:
         event["colorId"] = str(color)
 
-    return service.events().insert(calendarId=calendar_id, body=event).execute()
+    return service().events().insert(calendarId=calendar_id, body=event).execute()
 
 
 def import_from_ics(file_name):
@@ -139,4 +139,4 @@ def import_from_ics(file_name):
             print(event)
 
 
-service = googleapi.get_service('calendar')
+service = googleapi.Service('calendar')
