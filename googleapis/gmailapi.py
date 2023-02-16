@@ -46,13 +46,14 @@ class Mail:
         return f"Mail({self.subject} - {self.from_})"
 
 
-def get_unread_mail() -> list[Mail]:
+def get_unread_mail(current_mail: list[Mail] = []) -> list[Mail]:
     """Get unread mails."""
+    current_ids = [x.id for x in current_mail]
     resp = gmail_service.users().messages().list(userId="me", q="is:unread").execute()
     if "messages" not in resp.keys():
         return []
 
-    return [Mail(x) for x in resp["messages"]]
+    return [Mail(x) for x in resp["messages"] if x["id"] not in current_ids]
 
 
 def get_unread():
