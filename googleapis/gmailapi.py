@@ -1,4 +1,5 @@
 """Gmail api."""
+from __future__ import annotations
 from . import googleapi
 
 
@@ -8,6 +9,10 @@ class Mail:
     def __init__(self, mail_info: dict) -> None:
         """Save mail info."""
         self._mail_info = mail_info
+
+    def __eq__(self, other: Mail) -> None:
+        """Compare two mails."""
+        return self.id == other.id
 
     @property
     def id(self) -> str:
