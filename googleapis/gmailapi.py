@@ -41,6 +41,15 @@ class Mail:
         """Get from."""
         return self._get_header("From")
 
+    @property
+    def from_address(self) -> str:
+        """Get from address."""
+        addr = self.from_
+        if "<" in addr:
+            addr = addr.split("<")[1].split(">")[0]
+
+        return addr
+
     def __repr__(self) -> str:
         """Get repr."""
         return f"Mail({self.subject} - {self.from_})"
