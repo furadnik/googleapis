@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, annotations
 from . import googleapi
 service = googleapi.get_service('youtube')
 
@@ -67,3 +67,7 @@ class Video:
     def is_livestream(self) -> bool:
         """Check if video is livestream."""
         return is_livestream(self.id)
+
+    def __eq__(self, other: Video) -> bool:
+        """Compare two videos."""
+        return self.id == other.id
