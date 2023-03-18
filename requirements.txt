@@ -8,3 +8,4 @@ oauthlib
 requests
 requests-oauthlib
 urllib3
+types-pytz

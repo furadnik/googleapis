@@ -1,8 +1,14 @@
-from __future__ import print_function
+"""Calendar api."""
+from __future__ import annotations, print_function
 
 import datetime
 import pathlib
 import time
+from dataclasses import dataclass
+from functools import partial
+from typing import Iterator, Optional, Union
+
+import pytz
 
 from . import googleapi
 
@@ -65,17 +71,14 @@ def get_google_from_dt(dt):
 
 
 def get_dt_from_google(dt):
-    form = '%Y-%m-%dT%H:%M:%S%z'
-    dif = datetime.timedelta(days=0)
     if isinstance(dt, dict):
-        if "timeZone" in dt.keys():
-            if dt["timeZone"] != LOCAL_TIMEZONE:
-                dif = get_utc_offset()
         if "dateTime" in dt.keys():
+            form = '%Y-%m-%dT%H:%M:%S%z'
             dt = dt["dateTime"]
         else:
-            dt = dt["date"]; form = "%Y-%m-%d"
-    return datetime.datetime.strptime(dt, form).replace(tzinfo=None) + dif
+            dt = dt["date"]
+            form = "%Y-%m-%d"
+    return datetime.datetime.strptime(dt, form)
 
 
 def create_event(
@@ -139,4 +142,102 @@ def import_from_ics(file_name):
             print(event)
 
 
+def strip_timezone(aware: datetime.datetime) -> datetime.datetime:
+    """Strip timezone from dt."""
+    local = aware.astimezone(pytz.timezone(LOCAL_TIMEZONE))
+    return local.replace(tzinfo=None)
+
+
 service = googleapi.Service('calendar')
+
+
+@dataclass
+class Calendar:
+    """Google Calendar repr."""
+
+    calendar_id: str = 'primary'
+    service: googleapi.Service = service
+
+    def __repr__(self) -> str:
+        """Repr cal."""
+        return f"Calendar({self.calendar_id})"
+
+    def create_event(self,
+                     name: str, start: datetime.datetime, end: Optional[datetime.datetime] = None,
+                     description: Optional[str] = None, location: Optional[str] = None,
+                     color: Union[str, int, None] = None, all_day: bool = False
+                     ) -> Event:
+        """Create a Calendar Event."""
+        if not end:
+            end = start + datetime.timedelta(hours=1)
+        event = {
+            'summary': name,
+            'start': {'dateTime': get_google_from_dt(start), "timeZone": LOCAL_TIMEZONE},
+            'end': {'dateTime': get_google_from_dt(end), "timeZone": LOCAL_TIMEZONE},
+        }
+        if all_day:
+            event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
+            event["end"] = {"date": datetime.datetime.strftime(todt(end), "%Y-%m-%d")}
+        if description:
+            event["description"] = description
+        if location:
+            event["location"] = location
+        if color:
+            event["colorId"] = str(color)
+
+        response = service().events().insert(calendarId=self.calendar_id,
+                                             body=event).execute()
+        return Event.from_service_event(self, response)
+
+    def list_events(self, date=None, max_results=10, force_day=True) -> Iterator[Event]:
+        """Get events."""
+        if not date:
+            date = now()
+        date = todt(date)
+        date = todt(date.date())
+        if force_day:
+            timeMax = get_google_from_dt(date + datetime.timedelta(days=1)) + "Z"
+        else:
+            timeMax = None
+        date = get_google_from_dt(date) + "Z"
+
+        response = service().events().list(
+            calendarId=self.calendar_id, timeMin=date,
+            maxResults=max_results, singleEvents=True,
+            orderBy="startTime", timeMax=timeMax,
+        ).execute()["items"]
+        return map(partial(Event.from_service_event, self),
+                   response)
+
+    def __iter__(self) -> Iterator[Event]:
+        """Return iterator."""
+        return self.list_events()
+
+
+@dataclass
+class Event:
+    """Google Calendar Event repr."""
+
+    calendar: Calendar
+    event_id: str
+    title: str
+    start: datetime.datetime
+    end: datetime.datetime
+    all_day: bool
+    color: int
+    location: str
+
+    @staticmethod
+    def from_service_event(calendar: Calendar, data: dict) -> Event:
+        """Generate event from the result of an api query."""
+        start = strip_timezone(get_dt_from_google(data["start"]))
+        end = strip_timezone(get_dt_from_google(data["end"]))
+        return Event(calendar, data["id"], data["summary"],
+                     start, end, "date" in data["start"].keys(),
+                     color=(data["color"] if "color" in data.keys() else None),
+                     location=(data["location"] if "location" in data.keys() else None),
+                     )
+
+
+if __name__ == '__main__':
+    print(list(Calendar().list_events()))
