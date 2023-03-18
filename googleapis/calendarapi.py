@@ -189,7 +189,7 @@ class Calendar:
                                              body=event).execute()
         return Event.from_service_event(self, response)
 
-    def list_events(self, date=None, max_results=10, force_day=True) -> Iterator[Event]:
+    def list_events(self, date=None, max_results=10, force_day=True, future=True) -> Iterator[Event]:
         """Get events."""
         if not date:
             date = now()
@@ -206,8 +206,15 @@ class Calendar:
             maxResults=max_results, singleEvents=True,
             orderBy="startTime", timeMax=timeMax,
         ).execute()["items"]
-        return map(partial(Event.from_service_event, self),
-                   response)
+
+        events: Iterator[Event] = map(partial(Event.from_service_event, self),
+                                      response)
+
+        if future:
+            events = filter(lambda x: x.start > datetime.datetime.now(),
+                            events)
+
+        return events
 
     def __iter__(self) -> Iterator[Event]:
         """Return iterator."""
