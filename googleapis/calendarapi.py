@@ -238,6 +238,14 @@ class Event:
                      location=(data["location"] if "location" in data.keys() else None),
                      )
 
+    def __eq__(self, o) -> bool:
+        """Compare events."""
+        if isinstance(o, str):
+            return o == self.event_id or o == self.title
+        elif isinstance(o, Event):
+            return o.event_id == self.event_id
+        return False
+
 
 if __name__ == '__main__':
     print(list(Calendar().list_events()))
