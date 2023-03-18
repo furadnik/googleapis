@@ -189,7 +189,7 @@ class Calendar:
                                              body=event).execute()
         return Event.from_service_event(self, response)
 
-    def list_events(self, date=None, max_results=10, force_day=True, future=True) -> Iterator[Event]:
+    def list_events(self, date=None, max_results=10, force_day=True, future=False, past=False) -> Iterator[Event]:
         """Get events."""
         if not date:
             date = now()
@@ -211,7 +211,11 @@ class Calendar:
                                       response)
 
         if future:
-            events = filter(lambda x: x.start > datetime.datetime.now(),
+            events = filter(lambda x: x.start >= datetime.datetime.now(),
+                            events)
+
+        if past:
+            events = filter(lambda x: x.end <= datetime.datetime.now(),
                             events)
 
         return events
