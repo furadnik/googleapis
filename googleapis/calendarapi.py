@@ -43,7 +43,7 @@ def get_utc_offset():
 
 
 def get_time(event):
-    return [get_dt_from_google(event["start"]), get_dt_from_google(event["end"])]
+    return [strip_timezone(get_dt_from_google(event["start"])), strip_timezone(get_dt_from_google(event["end"]))]
 
 
 def get_timestamp(event):
