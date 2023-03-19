@@ -1,5 +1,6 @@
 """Gmail api."""
 from __future__ import annotations
+
 from . import googleapi
 
 
@@ -9,6 +10,8 @@ class Mail:
     def __init__(self, mail_info: dict) -> None:
         """Save mail info."""
         self._mail_info = mail_info
+        print(self._get_body())
+        raise Exception()
 
     def __eq__(self, other: Mail) -> None:
         """Compare two mails."""
@@ -18,6 +21,13 @@ class Mail:
     def id(self) -> str:
         """Get message id."""
         return self._mail_info["id"]
+
+    @property
+    def body(self) -> str:
+        """TODO: implement later."""
+        return gmail_service.users().messages().get(
+            userId="me", id=self.id, format="full"
+        ).execute()["snippet"]
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
