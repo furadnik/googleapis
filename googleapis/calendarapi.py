@@ -62,7 +62,7 @@ def todt(dt):
 def get_current_events(date=None):
     if date is None:
         date = now()
-    return [event for event in list_events(date=date) if get_time(event)[0] <= now() <= get_time(event)[1]]
+    return [event for event in list_events(date=date) if get_time(event)[0] <= date <= get_time(event)[1]]
 
 
 def get_google_from_dt(dt):
@@ -189,7 +189,7 @@ class Calendar:
                                              body=event).execute()
         return Event.from_service_event(self, response)
 
-    def list_events(self, date=None, max_results=10, force_day=True, future=False, past=False) -> Iterator[Event]:
+    def list_events(self, date=None, max_results=50, force_day=True, future=False, past=False) -> Iterator[Event]:
         """Get events."""
         if not date:
             date = now()
@@ -219,6 +219,13 @@ class Calendar:
                             events)
 
         return events
+
+    def list_current_events(self, date: Optional[datetime.datetime] = None,
+                            margin: datetime.timedelta = datetime.timedelta(days=0), **kwargs) -> Iterator[Event]:
+        """List events happening currently."""
+        date = date if date is not None else datetime.datetime.now()
+        lower_bound, upper_bound = date - margin, date + margin
+        return filter(lambda x: x.start <= upper_bound and x.end >= lower_bound, self.list_events(**kwargs))
 
     def __iter__(self) -> Iterator[Event]:
         """Return iterator."""
@@ -259,4 +266,4 @@ class Event:
 
 
 if __name__ == '__main__':
-    print(list(Calendar().list_events()))
+    print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
