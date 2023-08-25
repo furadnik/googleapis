@@ -108,7 +108,7 @@ class File:
                                               fileId=self.id,
                                               fields='id').execute()
 
-    def upload(self, path, name=None, exclude_partial=False, hidden=True):
+    def upload(self, path, name=None, exclude_partial=False, hidden=True) -> File:
         if not self.is_dir:
             return None
         if name is None:
