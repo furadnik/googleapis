@@ -1,10 +1,15 @@
-from __future__ import print_function
-import pathlib
-from . import googleapi
-from googleapiclient.http import MediaFileUpload, MediaInMemoryUpload, MediaIoBaseDownload
-import os, shutil
+from __future__ import annotations, print_function
+
 import hashlib
 import io
+import os
+import pathlib
+import shutil
+
+from googleapiclient.http import (MediaFileUpload, MediaInMemoryUpload,
+                                  MediaIoBaseDownload)
+
+from . import googleapi
 
 FIELDS = 'id,name,mimeType,md5Checksum,parents,size'
 
