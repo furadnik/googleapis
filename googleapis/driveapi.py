@@ -289,7 +289,7 @@ def search_for_files(name):
     return r
 
 
-def get_file(id):
+def get_file(id: str) -> File:
     try:
         return File(drive_service().files().get(fileId=id, fields=FIELDS).execute())
     except:
