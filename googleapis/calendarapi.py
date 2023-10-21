@@ -256,6 +256,11 @@ class Event:
                      location=(data["location"] if "location" in data.keys() else None),
                      )
 
+    @property
+    def duration(self) -> datetime.timedelta:
+        """Get the event duration."""
+        return self.end - self.start
+
     def __eq__(self, o) -> bool:
         """Compare events."""
         if isinstance(o, str):
