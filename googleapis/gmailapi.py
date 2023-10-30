@@ -13,7 +13,7 @@ def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -
     mime_type = msg.get_content_maintype()
     if mime_type == "multipart":
         return "".join(get_body(x, preferred_type=preferred_type) for x in msg.get_payload())
-    elif mime_type == "text":
+    elif mime_type == "text" and (preferred_type is None or msg.get_content_type() == preferred_type):
         return base64.b64decode(msg.get_payload()).decode("utf-8")
     return ""
 
