@@ -1,7 +1,19 @@
 """Gmail api."""
 from __future__ import annotations
 
+import base64
+
 from . import googleapi
+
+
+def get_full_body(msg: dict) -> str:
+    """Get the full body of a messsage."""
+    ret = ""
+    for p in msg["payload"]["parts"]:
+        if p["mimeType"] in ["text/plain", "text/html"]:
+            data = base64.urlsafe_b64decode(p["body"]["data"]).decode("utf-8")
+            ret += data
+    return ret
 
 
 class Mail:
@@ -11,8 +23,10 @@ class Mail:
         """Save mail info."""
         self._mail_info = mail_info
 
-    def __eq__(self, other: Mail) -> None:
+    def __eq__(self, other: object) -> bool:
         """Compare two mails."""
+        if not isinstance(other, Mail):
+            raise NotImplementedError("Not implemented equating to other types than mail.")
         return self.id == other.id
 
     @property
@@ -23,9 +37,11 @@ class Mail:
     @property
     def body(self) -> str:
         """TODO: implement later."""
-        return gmail_service.users().messages().get(
-            userId="me", id=self.id, format="full"
-        ).execute()["snippet"]
+        return get_full_body(
+            gmail_service.users().messages().get(
+                userId="me", id=self.id, format="full"
+            ).execute()
+        )
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
@@ -38,6 +54,7 @@ class Mail:
         for x in self._get_headers():
             if x["name"] == header_name:
                 return x["value"]
+        raise ValueError("Header not found.")
 
     @property
     def subject(self) -> str:
