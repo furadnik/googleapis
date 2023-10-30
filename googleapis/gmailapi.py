@@ -2,18 +2,20 @@
 from __future__ import annotations
 
 import base64
+import email
+from typing import Optional
 
 from . import googleapi
 
 
-def get_full_body(msg: dict) -> str:
-    """Get the full body of a messsage."""
-    ret = ""
-    for p in msg["payload"]["parts"]:
-        if p["mimeType"] in ["text/plain", "text/html"]:
-            data = base64.urlsafe_b64decode(p["body"]["data"]).decode("utf-8")
-            ret += data
-    return ret
+def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -> str:
+    """Get message body."""
+    mime_type = msg.get_content_maintype()
+    if mime_type == "multipart":
+        return "".join(get_body(x, preferred_type=preferred_type) for x in msg.get_payload())
+    elif mime_type == "text":
+        return base64.b64decode(msg.get_payload()).decode("utf-8")
+    return ""
 
 
 class Mail:
@@ -36,12 +38,13 @@ class Mail:
 
     @property
     def body(self) -> str:
-        """TODO: implement later."""
-        return get_full_body(
-            gmail_service.users().messages().get(
-                userId="me", id=self.id, format="full"
-            ).execute()
-        )
+        """Get email body."""
+        gmail_content = gmail_service.users().messages().get(
+            userId="me", id=self.id, format="raw"
+        ).execute()
+        msg_raw = base64.b64decode(gmail_content['raw'])
+        msg_str = email.message_from_bytes(msg_raw)
+        return get_body(msg_str) or get_body(msg_str, None)
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
