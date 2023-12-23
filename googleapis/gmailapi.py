@@ -130,4 +130,4 @@ def create_draft(fr="filip.uradnik9@gmail.com", to="", subject="", body="", file
 gmail_service = googleapi.get_service('gmail', "v1")
 
 if __name__ == "__main__":
-    print(get_unread_mail())
+    print(get_unread_mail()[0].subject)

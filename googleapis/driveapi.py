@@ -83,6 +83,14 @@ class File:
                     else:
                         os.remove(path / x)
 
+    def set_share(self, share: bool) -> None:
+        """Set public sharing to `share`."""
+        body = {"role": "reader", "type": "anyone"}
+        drive_service().permissions().create(
+            fileId=self.id,
+            body=body
+        ).execute()
+
     def __repr__(self):
         return f"File({self.name}, {self.id})"
 
