@@ -6,13 +6,12 @@ import pathlib
 import time
 from dataclasses import dataclass
 from functools import partial
+from subprocess import PIPE, Popen
 from typing import Iterator, Optional, Union
 
 import pytz
 
 from . import googleapi
-
-LOCAL_TIMEZONE = "Europe/Prague"
 
 
 def now():
@@ -99,12 +98,14 @@ def create_event(
     10 bold green
     11 bold red
     """
+    tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
+               ).stdout.read().decode()
     if not end:
         end = start + datetime.timedelta(hours=1)
     event = {
         'summary': name,
-        'start': {'dateTime': get_google_from_dt(start), "timeZone": LOCAL_TIMEZONE},
-        'end': {'dateTime': get_google_from_dt(end), "timeZone": LOCAL_TIMEZONE},
+        'start': {'dateTime': get_google_from_dt(start), "timeZone": tz},
+        'end': {'dateTime': get_google_from_dt(end), "timeZone": tz},
     }
     if all_day:
         event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
@@ -144,7 +145,9 @@ def import_from_ics(file_name):
 
 def strip_timezone(aware: datetime.datetime) -> datetime.datetime:
     """Strip timezone from dt."""
-    local = aware.astimezone(pytz.timezone(LOCAL_TIMEZONE))
+    tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
+               ).stdout.read().decode()  # type: ignore
+    local = aware.astimezone(pytz.timezone(tz))
     return local.replace(tzinfo=None)
 
 
@@ -168,12 +171,14 @@ class Calendar:
                      color: Union[str, int, None] = None, all_day: bool = False
                      ) -> Event:
         """Create a Calendar Event."""
+        tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
+                   ).stdout.read().decode()  # type: ignore
         if not end:
             end = start + datetime.timedelta(hours=1)
         event = {
             'summary': name,
-            'start': {'dateTime': get_google_from_dt(start), "timeZone": LOCAL_TIMEZONE},
-            'end': {'dateTime': get_google_from_dt(end), "timeZone": LOCAL_TIMEZONE},
+            'start': {'dateTime': get_google_from_dt(start), "timeZone": tz},
+            'end': {'dateTime': get_google_from_dt(end), "timeZone": tz},
         }
         if all_day:
             event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
