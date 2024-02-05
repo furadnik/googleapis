@@ -18,6 +18,9 @@ def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -
     return ""
 
 
+Id = str
+
+
 class Mail:
     """Mail object."""
 
@@ -27,12 +30,14 @@ class Mail:
 
     def __eq__(self, other: object) -> bool:
         """Compare two mails."""
-        if not isinstance(other, Mail):
-            raise NotImplementedError("Not implemented equating to other types than mail.")
-        return self.id == other.id
+        if isinstance(other, Mail):
+            return self.id == other.id
+        elif isinstance(other, Id):
+            return self.id == other
+        raise NotImplementedError("Not implemented equating to other types than mail.")
 
     @property
-    def id(self) -> str:
+    def id(self) -> Id:
         """Get message id."""
         return self._mail_info["id"]
 
@@ -83,9 +88,9 @@ class Mail:
         return f"Mail({self.subject} - {self.from_})"
 
 
-def get_unread_mail(current_mail: list[Mail] = []) -> list[Mail]:
+def get_unread_mail(current_mail: list[Mail | Id] = []) -> list[Mail]:
     """Get unread mails."""
-    current_ids = [x.id for x in current_mail]
+    current_ids = {x.id if isinstance(x, Mail) else x for x in current_mail}
     resp = gmail_service.users().messages().list(userId="me", q="is:unread").execute()
     if "messages" not in resp.keys():
         return []
