@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import base64
 import email
-from typing import Optional
+from typing import Collection, Optional
 
 from . import googleapi
 
@@ -88,7 +88,7 @@ class Mail:
         return f"Mail({self.subject} - {self.from_})"
 
 
-def get_unread_mail(current_mail: list[Mail | Id] = []) -> list[Mail]:
+def get_unread_mail(current_mail: Collection[Mail] | Collection[Id] = []) -> list[Mail]:
     """Get unread mails."""
     current_ids = {x.id if isinstance(x, Mail) else x for x in current_mail}
     resp = gmail_service.users().messages().list(userId="me", q="is:unread").execute()
