@@ -14,6 +14,12 @@ import pytz
 from . import googleapi
 
 
+def get_timezone() -> str:
+    """Get current timezone."""
+    return Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
+                 ).stdout.read().decode().strip()  # type: ignore
+
+
 def now():
     return datetime.datetime.now()
 
@@ -98,8 +104,7 @@ def create_event(
     10 bold green
     11 bold red
     """
-    tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
-               ).stdout.read().decode().strip()
+    tz = get_timezone()
     if not end:
         end = start + datetime.timedelta(hours=1)
     event = {
@@ -145,8 +150,7 @@ def import_from_ics(file_name):
 
 def strip_timezone(aware: datetime.datetime) -> datetime.datetime:
     """Strip timezone from dt."""
-    tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
-               ).stdout.read().decode().strip()  # type: ignore
+    tz = get_timezone()
     local = aware.astimezone(pytz.timezone(tz))
     return local.replace(tzinfo=None)
 
@@ -171,8 +175,7 @@ class Calendar:
                      color: Union[str, int, None] = None, all_day: bool = False
                      ) -> Event:
         """Create a Calendar Event."""
-        tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
-                   ).stdout.read().decode().strip()  # type: ignore
+        tz = get_timezone()
         if not end:
             end = start + datetime.timedelta(hours=1)
         event = {
