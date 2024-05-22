@@ -17,7 +17,7 @@ from . import googleapi
 def get_timezone() -> str:
     """Get current timezone."""
     return Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
-                 ).stdout.read().decode().strip()  # type: ignore
+                 ).stdout.read().decode().strip() or "Europe/Prague"  # type: ignore
 
 
 def now():
