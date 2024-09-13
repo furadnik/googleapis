@@ -6,20 +6,21 @@ tasks_service = googleapi.get_service('tasks', v="v1")
 
 
 class Task:
-    def __init__(self, executed, tasklist_id):
+    def __init__(self, executed: dict, tasklist_id: str) -> None:
         self.title = executed["title"]
         self.id = executed["id"]
+        self.notes: str | None = executed.get("notes", None)
         self.tasklist = tasklist_id
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, Task):
             return self.id == other.id
         return self.id == other or self.title == other
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
-    def delete(self):
+    def delete(self) -> None:
         tasks_service.tasks().delete(tasklist=self.tasklist, task=self.id).execute()
 
 
@@ -50,17 +51,20 @@ class TaskList:
     def url(self):
         return f"https://tasks.google.com/embed/list/?id={self.id}&origin=https://mail.google.com&fullWidth=1&lfhs=2"
 
-    def add_task(self, title):
-        return Task(tasks_service.tasks().insert(tasklist=self.id, body={"title": title}).execute(), self.id)
+    def add_task(self, title: str, notes: str = "") -> Task:
+        return Task(tasks_service.tasks().insert(tasklist=self.id, body={"title": title, "notes": notes}).execute(),
+                    self.id)
 
-    def get_task(self, title):
+    def get_task(self, title: str) -> Task | None:
         for x in self.get_tasks():
             if x.title == title:
                 return x
+        return None
 
-    def delete_task(self, title):
+    def delete_task(self, title: str) -> None:
         task = self.get_task(title)
-        task.delete()
+        if task is not None:
+            task.delete()
 
 
 def get_or_create_tasks_list(name: str) -> TaskList:
@@ -81,12 +85,3 @@ def get_tasks_lists() -> list[TaskList]:
 
 def get_tasks_list(name: str) -> TaskList:
     return TaskList(tasks_service.tasklists().get(tasklist=name).execute()["id"])
-
-
-if __name__ == '__main__':
-    print(t := get_tasks_lists()[0])
-    print(t.id)
-    print(t.url)
-    print(t := get_or_create_tasks_list("project_manager"))
-    print(t.url)
-    print(t.name)
