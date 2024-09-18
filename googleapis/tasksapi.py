@@ -1,4 +1,7 @@
+from typing import Iterator
+
 from . import googleapi
+from .list_full import list_all
 
 DEF_TASK_LIST = ""
 MAX_TASKS = 100
@@ -30,10 +33,8 @@ class TaskList:
 
     def get_tasks(self):
         """Return non-completed tasks present in the tasklist."""
-        tasks = tasks_service.tasks().list(tasklist=self.id, maxResults=MAX_TASKS).execute()
-        if "items" not in tasks.keys():
-            return []
-        return [Task(x, self.id) for x in tasks["items"]]
+        tasks = list_all(tasks_service.tasks().list, tasklist=self.id, maxResults=MAX_TASKS)
+        return (Task(x, self.id) for x in tasks)
 
     def __repr__(self):
         """Return a string representation."""
@@ -79,9 +80,14 @@ def create_tasks_list(name: str) -> TaskList:
     return TaskList(tasks_service.tasklists().insert(body={"title": name}).execute()["id"])
 
 
-def get_tasks_lists() -> list[TaskList]:
-    return [TaskList(x["id"]) for x in tasks_service.tasklists().list().execute()["items"]]
+def get_tasks_lists() -> Iterator[TaskList]:
+    return [TaskList(x["id"]) for x in list_all(tasks_service.tasklists().list)]  # type: ignore
 
 
 def get_tasks_list(name: str) -> TaskList:
     return TaskList(tasks_service.tasklists().get(tasklist=name).execute()["id"])
+
+
+if __name__ == '__main__':
+    for x in get_tasks_lists()[0].get_tasks():
+        print("T", x)
