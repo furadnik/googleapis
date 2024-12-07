@@ -30,7 +30,7 @@ class Mail:
     def __init__(self, mail_info: dict, service: googleapi.Service) -> None:
         """Save mail info."""
         self._mail_info = mail_info
-        self._service = service
+        self.service = service
 
     def __eq__(self, other: object) -> bool:
         """Compare two mails."""
@@ -48,7 +48,7 @@ class Mail:
     @property
     def body(self) -> str:
         """Get email body."""
-        gmail_content = self._service().users().messages().get(
+        gmail_content = self.service().users().messages().get(
             userId="me", id=self.id, format="raw"
         ).execute()
         msg_raw = base64.b64decode(gmail_content['raw'])
@@ -57,7 +57,7 @@ class Mail:
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
-        return self._service().users().messages().get(
+        return self.service().users().messages().get(
             userId="me", id=self.id, format="metadata"
         ).execute()["payload"]["headers"]
 
