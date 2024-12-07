@@ -20,13 +20,17 @@ def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -
 
 Id = str
 
+SERVICE = googleapi.Service('gmail', "v1")
+SERVICE_FU = googleapi.Service('gmail', "v1", user="fu9")
+
 
 class Mail:
     """Mail object."""
 
-    def __init__(self, mail_info: dict) -> None:
+    def __init__(self, mail_info: dict, service: googleapi.Service) -> None:
         """Save mail info."""
         self._mail_info = mail_info
+        self._service = service
 
     def __eq__(self, other: object) -> bool:
         """Compare two mails."""
@@ -44,7 +48,7 @@ class Mail:
     @property
     def body(self) -> str:
         """Get email body."""
-        gmail_content = gmail_service.users().messages().get(
+        gmail_content = self._service().users().messages().get(
             userId="me", id=self.id, format="raw"
         ).execute()
         msg_raw = base64.b64decode(gmail_content['raw'])
@@ -53,7 +57,7 @@ class Mail:
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
-        return gmail_service.users().messages().get(
+        return self._service().users().messages().get(
             userId="me", id=self.id, format="metadata"
         ).execute()["payload"]["headers"]
 
@@ -88,51 +92,47 @@ class Mail:
         return f"Mail({self.subject} - {self.from_})"
 
 
-def get_unread_mail(current_mail: Collection[Mail] | Collection[Id] = []) -> list[Mail]:
+def get_unread_mail(current_mail: Collection[Mail] | Collection[Id] = [],
+                    service: googleapi.Service = SERVICE) -> list[Mail]:
     """Get unread mails."""
     current_ids = {x.id if isinstance(x, Mail) else x for x in current_mail}
-    resp = gmail_service.users().messages().list(userId="me", q="is:unread").execute()
+    resp = service().users().messages().list(userId="me", q="is:unread").execute()
     if "messages" not in resp.keys():
         return []
 
-    return [Mail(x) for x in resp["messages"] if x["id"] not in current_ids]
+    return [Mail(x, service) for x in resp["messages"] if x["id"] not in current_ids]
 
 
-def get_unread():
+def get_unread(service: googleapi.Service = SERVICE):
     """Get unread mails ids."""
-    resp = gmail_service.users().messages().list(userId="me", q="is:unread").execute()
+    resp = service().users().messages().list(userId="me", q="is:unread").execute()
     if "messages" not in resp.keys():
         return []
 
     return [x["id"] for x in resp["messages"]]
 
 
-def get_headers(message_id):
+def get_headers(message_id, service: googleapi.Service = SERVICE):
     """Get headers."""
     return {
         x["name"]: x["value"]
-        for x in gmail_service.users().messages().get(
+        for x in service().users().messages().get(
             userId="me", id=message_id, format="metadata"
         ).execute()["payload"]["headers"]
     }
 
 
-def create_draft(fr="filip.uradnik9@gmail.com", to="", subject="", body="", file=""):
+def create_draft(fr="filip.uradnik9@gmail.com", to="", subject="", body="", file="",
+                 service: googleapi.Service = SERVICE):
     """Create draft mail."""
     from . import send_message
-    if fr == "filip.uradnik9@gmail.com":
-        service = googleapi.get_service('gmail', "v1", user="fu9")
-    else:
-        service = gmail_service
     if file:
         message = send_message.create_message_with_attachment(fr, to, subject, body, file)
     else:
         message = send_message.create_message(fr, to, subject, body)
 
-    return send_message.create_draft(service, fr, message)
+    return send_message.create_draft(service(), fr, message)
 
-
-gmail_service = googleapi.get_service('gmail', "v1")
 
 if __name__ == "__main__":
     print(get_unread_mail()[0].subject)
