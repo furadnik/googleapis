@@ -36,7 +36,7 @@ def add_upload_func(parser: ArgumentParser) -> None:
 
 def add_share_func(parser: ArgumentParser) -> None:
     """Add uploading function."""
-    parser.add_argument("path", type=Path)
+    parser.add_argument("path", type=Path, nargs="*")
     parser.set_defaults(func=lambda x: upload("0ByyEG1ycRwuTTGN2TXdabUZTUTQ", x.path, True))
 
 
