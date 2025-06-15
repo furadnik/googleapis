@@ -1,5 +1,9 @@
-from __future__ import print_function, annotations
+from __future__ import annotations, print_function
+
+from functools import cached_property
+
 from . import googleapi
+
 service = googleapi.get_service('youtube')
 
 
@@ -58,12 +62,12 @@ class Video:
         """Save video id."""
         self.id = id
 
-    @property
+    @cached_property
     def name(self) -> str:
         """Get video name."""
         return get_name_by_id(self.id)
 
-    @property
+    @cached_property
     def is_livestream(self) -> bool:
         """Check if video is livestream."""
         return is_livestream(self.id)
