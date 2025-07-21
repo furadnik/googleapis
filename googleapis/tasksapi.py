@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Iterator
 
 from . import googleapi
@@ -52,8 +53,11 @@ class TaskList:
     def url(self):
         return f"https://tasks.google.com/embed/list/?id={self.id}&origin=https://mail.google.com&fullWidth=1&lfhs=2"
 
-    def add_task(self, title: str, notes: str = "") -> Task:
-        return Task(tasks_service.tasks().insert(tasklist=self.id, body={"title": title, "notes": notes}).execute(),
+    def add_task(self, title: str, notes: str = "", due: datetime | None = None) -> Task:
+        body = {"title": title, "notes": notes}
+        if due is not None:
+            body["due"] = due.isoformat()
+        return Task(tasks_service.tasks().insert(tasklist=self.id, body=body).execute(),
                     self.id)
 
     def get_task(self, title: str) -> Task | None:
