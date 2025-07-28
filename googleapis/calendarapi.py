@@ -228,6 +228,14 @@ class Calendar:
 
         return events
 
+    def get_event_by_id(self, event_id: str) -> Event:
+        """Get an event by id."""
+        response = service().events().get(
+            calendarId=self.calendar_id,
+            eventId=event_id
+        ).execute()
+        return Event.from_service_event(self, response)
+
     def list_current_events(self, date: Optional[datetime.datetime] = None,
                             margin: datetime.timedelta = datetime.timedelta(days=0), **kwargs) -> Iterator[Event]:
         """List events happening currently."""
@@ -250,8 +258,8 @@ class Event:
     start: datetime.datetime
     end: datetime.datetime
     all_day: bool
-    color: int
-    location: str
+    color: int | None
+    location: str | None
 
     @staticmethod
     def from_service_event(calendar: Calendar, data: dict) -> Event:
@@ -280,3 +288,6 @@ class Event:
 
 if __name__ == '__main__':
     print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
+    for event in Calendar().list_current_events(margin=datetime.timedelta(hours=2)):
+        print(event.event_id)
+        print(Calendar().get_event_by_id(event.event_id))
