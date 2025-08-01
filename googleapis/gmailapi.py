@@ -4,12 +4,13 @@ from __future__ import annotations
 import base64
 import email
 from email.policy import default
+from functools import cached_property
 from typing import Collection, Optional
 
 from . import googleapi
 
 
-def get_body_with_fallback(msg: email.Message) -> str | None:
+def get_body_with_fallback(msg: email.message.EmailMessage) -> str | None:
     """Extract the body of the message, preferring plain text."""
     text = None
     html = None
@@ -25,16 +26,6 @@ def get_body_with_fallback(msg: email.Message) -> str | None:
         return text or html
     else:
         return msg.get_content()
-
-
-def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -> str:
-    """Get message body."""
-    mime_type = msg.get_content_maintype()
-    if mime_type == "multipart":
-        return "".join(get_body(x, preferred_type=preferred_type) for x in msg.get_payload())
-    elif mime_type == "text" and (preferred_type is None or msg.get_content_type() == preferred_type):
-        return base64.b64decode(msg.get_payload()).decode("utf-8")
-    return ""
 
 
 Id = str
@@ -64,8 +55,8 @@ class Mail:
         """Get message id."""
         return self._mail_info["id"]
 
-    @property
-    def body(self) -> str:
+    @cached_property
+    def body(self) -> str | None:
         """Get email body."""
         gmail_content = self.service().users().messages().get(
             userId="me", id=self.id, format="raw"
