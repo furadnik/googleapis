@@ -3,9 +3,28 @@ from __future__ import annotations
 
 import base64
 import email
+from email.policy import default
 from typing import Collection, Optional
 
 from . import googleapi
+
+
+def get_body_with_fallback(msg: email.Message) -> str | None:
+    """Extract the body of the message, preferring plain text."""
+    text = None
+    html = None
+    if msg.is_multipart():
+        for part in msg.walk():
+            ctype = part.get_content_type()
+            disp = part.get_content_disposition()
+
+            if ctype == 'text/plain' and disp != 'attachment':
+                text = part.get_content()
+            elif ctype == 'text/html' and disp != 'attachment':
+                html = part.get_content()
+        return text or html
+    else:
+        return msg.get_content()
 
 
 def get_body(msg: email.Message, preferred_type: Optional[str] = "text/plain") -> str:
@@ -51,9 +70,11 @@ class Mail:
         gmail_content = self.service().users().messages().get(
             userId="me", id=self.id, format="raw"
         ).execute()
-        msg_raw = base64.b64decode(gmail_content['raw'])
-        msg_str = email.message_from_bytes(msg_raw)
-        return get_body(msg_str) or get_body(msg_str, None)
+
+        msg_raw = base64.urlsafe_b64decode(gmail_content['raw'])
+        msg = email.message_from_bytes(msg_raw, policy=default)
+
+        return get_body_with_fallback(msg)
 
     def _get_headers(self) -> list[dict]:
         """TODO: implement later."""
@@ -81,11 +102,7 @@ class Mail:
     @property
     def from_address(self) -> str:
         """Get from address."""
-        addr = self.from_
-        if "<" in addr:
-            addr = addr.split("<")[1].split(">")[0]
-
-        return addr
+        return email.utils.parseaddr(self.from_)[1]
 
     def __repr__(self) -> str:
         """Get repr."""
@@ -135,4 +152,4 @@ def create_draft(fr="filip.uradnik9@gmail.com", to="", subject="", body="", file
 
 
 if __name__ == "__main__":
-    print(get_unread_mail()[0].subject)
+    print(get_unread_mail()[0].body)
