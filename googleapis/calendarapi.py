@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from functools import partial
 from subprocess import PIPE, Popen
-from typing import Iterator, Optional, Union
+from typing import Iterable, Iterator, Optional, Union
 
 import pytz
 
@@ -285,9 +285,32 @@ class Event:
             return o.event_id == self.event_id
         return False
 
+    @property
+    def attendees(self) -> list[str]:
+        """Return attendee emails for this event."""
+        svc = self.calendar.service()
+        ev = svc.events().get(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id
+        ).execute()
+        return [a.get("email") for a in ev.get("attendees", []) if a.get("email")]
+
+    def invite(self, emails: Iterable[str]) -> None:
+        """Invite participants to the event."""
+        current = set(attendee.lower() for attendee in self.attendees)
+        emails = [email for email in emails if email not in current]
+        svc = self.calendar.service()
+        svc.events().patch(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id,
+            body={"attendees": [{"email": a} for a in current] + [{"email": email} for email in emails]},
+            sendUpdates="all"
+        ).execute()
+
 
 if __name__ == '__main__':
     print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
     for event in Calendar().list_current_events(margin=datetime.timedelta(hours=2)):
         print(event.event_id)
         print(Calendar().get_event_by_id(event.event_id))
+        event.invite(["filip.uradnik9@gmail.com"])

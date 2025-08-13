@@ -5,7 +5,7 @@ import base64
 import email
 from email.policy import default
 from functools import cached_property
-from typing import Collection, Optional
+from typing import Collection
 
 from . import googleapi
 
