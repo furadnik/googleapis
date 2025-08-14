@@ -307,6 +307,17 @@ class Event:
             sendUpdates="all"
         ).execute()
 
+    def set_location(self, location: str) -> None:
+        """Set or change the event location."""
+        svc = self.calendar.service()
+        svc.events().patch(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id,
+            body={"location": location},
+            sendUpdates="all"
+        ).execute()
+        self.location = location
+
 
 if __name__ == '__main__':
     print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
