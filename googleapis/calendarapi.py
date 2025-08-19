@@ -318,6 +318,20 @@ class Event:
         ).execute()
         self.location = location
 
+    def set_time(self, start: datetime.datetime, end: datetime.datetime) -> None:
+        """Reschedule the time of the event."""
+        svc = self.calendar.service()
+        svc.events().patch(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id,
+            body={
+                "start": {"dateTime": get_google_from_dt(start), "timeZone": get_timezone()},
+                "end": {"dateTime": get_google_from_dt(end), "timeZone": get_timezone()}
+            },
+            sendUpdates="all"
+        ).execute()
+        self.start, self.end = start, end
+
 
 if __name__ == '__main__':
     print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
