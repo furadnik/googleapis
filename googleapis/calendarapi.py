@@ -1,11 +1,11 @@
 """Calendar api."""
 from __future__ import annotations, print_function
 
-from enum import StrEnum
 import datetime
 import pathlib
 import time
 from dataclasses import dataclass
+from enum import StrEnum
 from functools import partial
 from subprocess import PIPE, Popen
 from typing import Iterable, Iterator, Optional, Union
@@ -326,15 +326,22 @@ class Event:
         ).execute()
         return [a.get("email") for a in ev.get("attendees", []) if a.get("email")]
 
-    def invite(self, emails: Iterable[str]) -> None:
+    def invite(self, emails: Iterable[str] | str) -> None:
         """Invite participants to the event."""
-        current = set(attendee.lower() for attendee in self.attendees)
-        emails = [email for email in emails if email not in current]
+        if isinstance(emails, str):
+            emails = [emails]
         svc = self.calendar.service()
+        current_attendees_state = svc.events().get(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id
+        ).execute().get("attendees", [])
+        current_attendees_emails = {attendee["email"] for attendee in current_attendees_state if "email" in attendee}
+        emails = [email for email in emails if email not in current_attendees_emails]
+        print(current_attendees_state, current_attendees_emails, emails)
         svc.events().patch(
             calendarId=self.calendar.calendar_id,
             eventId=self.event_id,
-            body={"attendees": [{"email": a} for a in current] + [{"email": email} for email in emails]},
+            body={"attendees": current_attendees_state + [{"email": email} for email in emails]},
             sendUpdates="all"
         ).execute()
 
@@ -381,4 +388,5 @@ if __name__ == '__main__':
     for event in Calendar().list_events(force_day=False):
         print(event.event_id)
         print(event)
-        # event.respond_to_invite(True)
+        event.invite(["filip.uradnik9@gmail.com"])
+        break
