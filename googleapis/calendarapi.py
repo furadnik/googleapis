@@ -1,6 +1,7 @@
 """Calendar api."""
 from __future__ import annotations, print_function
 
+from enum import StrEnum
 import datetime
 import pathlib
 import time
@@ -197,8 +198,12 @@ class Calendar:
                                              body=event).execute()
         return Event.from_service_event(self, response)
 
-    def list_events(self, date=None, max_results=50, force_day=True, future=False, past=False) -> Iterator[Event]:
-        """Get events."""
+    def list_events(self, date=None, max_results=50, force_day=True, future=False, past=False,
+                    by_me: bool | None = None) -> Iterator[Event]:
+        """Get events.
+
+        by_me restricts to only events by me (True), or not by me (False). If None, no restriction is applied.
+        """
         if not date:
             date = now()
         date = todt(date)
@@ -212,7 +217,7 @@ class Calendar:
         response = service().events().list(
             calendarId=self.calendar_id, timeMin=date,
             maxResults=max_results, singleEvents=True,
-            orderBy="startTime", timeMax=timeMax,
+            orderBy="startTime", timeMax=timeMax
         ).execute()["items"]
 
         events: Iterator[Event] = map(partial(Event.from_service_event, self),
@@ -225,6 +230,9 @@ class Calendar:
         if past:
             events = filter(lambda x: x.end <= datetime.datetime.now(),
                             events)
+
+        if by_me is not None:
+            events = (event for event in events if event.by_me == by_me)
 
         return events
 
@@ -248,6 +256,24 @@ class Calendar:
         return self.list_events()
 
 
+class AttendanceStatus(StrEnum):
+    """Event status enum."""
+
+    needs_action = "needsAction"
+    declined = "declined"
+    tentative = "tentative"
+    accepted = "accepted"
+
+
+def _get_event_status(data: dict) -> AttendanceStatus:
+    """Get event status from data."""
+    if "attendees" in data:
+        for attendee in data["attendees"]:
+            if attendee.get("self", False):
+                return AttendanceStatus(attendee.get("responseStatus", "accepted"))
+    return AttendanceStatus.accepted  # Default if no attendees or self not found
+
+
 @dataclass
 class Event:
     """Google Calendar Event repr."""
@@ -260,16 +286,21 @@ class Event:
     all_day: bool
     color: int | None
     location: str | None
+    by_me: bool
+    attendance_status: AttendanceStatus
 
     @staticmethod
     def from_service_event(calendar: Calendar, data: dict) -> Event:
         """Generate event from the result of an api query."""
         start = strip_timezone(get_dt_from_google(data["start"]))
         end = strip_timezone(get_dt_from_google(data["end"]))
+        by_me = data.get("organizer", {}).get("self", False)
+        attendance_status = _get_event_status(data)
         return Event(calendar, data["id"], data["summary"],
                      start, end, "date" in data["start"].keys(),
                      color=(data["color"] if "color" in data.keys() else None),
                      location=(data["location"] if "location" in data.keys() else None),
+                     by_me=by_me, attendance_status=attendance_status
                      )
 
     @property
@@ -318,6 +349,19 @@ class Event:
         ).execute()
         self.location = location
 
+    def respond_to_invite(self, accept: bool) -> None:
+        """Respond to invite. Either accept (True) or decline (False)."""
+        svc = self.calendar.service()
+        response_status = AttendanceStatus.accepted if accept else AttendanceStatus.declined
+        svc.events().patch(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id,
+            # TODO: do not hardcode email
+            body={"attendees": [{"email": "mc.xenix@gmail.com", "responseStatus": response_status}]},
+            sendUpdates="all"
+        ).execute()
+        self.attendance_status = AttendanceStatus(response_status)
+
     def set_time(self, start: datetime.datetime, end: datetime.datetime) -> None:
         """Reschedule the time of the event."""
         svc = self.calendar.service()
@@ -334,8 +378,7 @@ class Event:
 
 
 if __name__ == '__main__':
-    print(list(Calendar().list_current_events(margin=datetime.timedelta(hours=2))))
-    for event in Calendar().list_current_events(margin=datetime.timedelta(hours=2)):
+    for event in Calendar().list_events(force_day=False):
         print(event.event_id)
-        print(Calendar().get_event_by_id(event.event_id))
-        event.invite(["filip.uradnik9@gmail.com"])
+        print(event)
+        # event.respond_to_invite(True)
