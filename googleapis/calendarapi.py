@@ -349,7 +349,7 @@ class Event:
         ).execute()
         self.location = location
 
-    def respond_to_invite(self, accept: bool) -> None:
+    def respond_to_invite(self, accept: bool, response_email: str = "mc.xenix@gmail.com") -> None:
         """Respond to invite. Either accept (True) or decline (False)."""
         svc = self.calendar.service()
         response_status = AttendanceStatus.accepted if accept else AttendanceStatus.declined
@@ -357,7 +357,7 @@ class Event:
             calendarId=self.calendar.calendar_id,
             eventId=self.event_id,
             # TODO: do not hardcode email
-            body={"attendees": [{"email": "mc.xenix@gmail.com", "responseStatus": response_status}]},
+            body={"attendees": [{"email": response_email, "responseStatus": response_status}]},
             sendUpdates="all"
         ).execute()
         self.attendance_status = AttendanceStatus(response_status)
