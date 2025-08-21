@@ -170,10 +170,10 @@ class Calendar:
         """Repr cal."""
         return f"Calendar({self.calendar_id})"
 
-    def create_event(self,
-                     name: str, start: datetime.datetime, end: Optional[datetime.datetime] = None,
+    def create_event(self, name: str,
+                     start: datetime.datetime | datetime.date, end: datetime.datetime | datetime.date | None = None,
                      description: Optional[str] = None, location: Optional[str] = None,
-                     color: Union[str, int, None] = None, all_day: bool = False
+                     color: Union[str, int, None] = None, all_day: bool | None = None
                      ) -> Event:
         """Create a Calendar Event."""
         tz = get_timezone()
@@ -184,6 +184,9 @@ class Calendar:
             'start': {'dateTime': get_google_from_dt(start), "timeZone": tz},
             'end': {'dateTime': get_google_from_dt(end), "timeZone": tz},
         }
+        # by default: date = all day & datetime = not all day
+        if all_day is None:
+            all_day = not isinstance(start, datetime.datetime)
         if all_day:
             event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
             event["end"] = {"date": datetime.datetime.strftime(todt(end), "%Y-%m-%d")}
@@ -385,8 +388,5 @@ class Event:
 
 
 if __name__ == '__main__':
-    for event in Calendar().list_events(force_day=False):
-        print(event.event_id)
-        print(event)
-        event.invite(["filip.uradnik9@gmail.com"])
-        break
+    Calendar().create_event('test', datetime.date.today())
+    Calendar().create_event('test2', datetime.datetime.now())
