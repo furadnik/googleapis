@@ -291,6 +291,7 @@ class Event:
     location: str | None
     by_me: bool
     attendance_status: AttendanceStatus
+    organizer: str
 
     @staticmethod
     def from_service_event(calendar: Calendar, data: dict) -> Event:
@@ -303,7 +304,8 @@ class Event:
                      start, end, "date" in data["start"].keys(),
                      color=(data["color"] if "color" in data.keys() else None),
                      location=(data["location"] if "location" in data.keys() else None),
-                     by_me=by_me, attendance_status=attendance_status
+                     by_me=by_me, attendance_status=attendance_status,
+                     organizer=data["organizer"]["email"]
                      )
 
     @property
