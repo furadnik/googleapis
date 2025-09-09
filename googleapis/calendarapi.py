@@ -331,6 +331,17 @@ class Event:
         ).execute()
         return [a.get("email") for a in ev.get("attendees", []) if a.get("email")]
 
+    @property
+    def attendee_statuses(self) -> dict[str, AttendanceStatus]:
+        """Return attendee emails for this event."""
+        svc = self.calendar.service()
+        ev = svc.events().get(
+            calendarId=self.calendar.calendar_id,
+            eventId=self.event_id
+        ).execute()
+        return {a.get("email"): AttendanceStatus(a.get("responseStatus", "accepted"))
+                for a in ev.get("attendees", []) if "email" in a}
+
     def invite(self, emails: Iterable[str] | str) -> None:
         """Invite participants to the event."""
         if isinstance(emails, str):
@@ -401,5 +412,10 @@ class Event:
 
 
 if __name__ == '__main__':
-    Calendar().create_event('test', datetime.date.today())
-    Calendar().create_event('test2', datetime.datetime.now())
+    for event in Calendar():
+        print(event.attendees)
+        if len(event.attendees) <= 1:
+            continue
+        print(event)
+        print(event.attendees)
+        print(event.attendee_statuses)
