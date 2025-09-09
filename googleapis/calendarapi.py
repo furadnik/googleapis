@@ -56,7 +56,7 @@ def get_timestamp(event):
     return [x.timestamp() for x in get_time(event)]
 
 
-def todt(dt):
+def todt(dt: datetime.datetime | datetime.date | datetime.time) -> datetime.datetime:
     if not isinstance(dt, datetime.datetime):
         if isinstance(dt, datetime.date):
             dt = datetime.datetime.combine(dt, datetime.datetime.min.time())
@@ -374,19 +374,30 @@ class Event:
         ).execute()
         self.attendance_status = AttendanceStatus(response_status)
 
-    def set_time(self, start: datetime.datetime, end: datetime.datetime) -> None:
+    def set_time(self, start: datetime.datetime | datetime.date, end: datetime.datetime | datetime.date,
+                 all_day: bool | None = None) -> None:
         """Reschedule the time of the event."""
+        if all_day is None:
+            all_day = not isinstance(start, datetime.datetime)
+        if all_day:
+            event = {
+                "start": {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")},
+                "end": {"date": datetime.datetime.strftime(todt(end), "%Y-%m-%d")}
+            }
+        else:
+            event = {
+                "start": {"dateTime": get_google_from_dt(start), "timeZone": get_timezone()},
+                "end": {"dateTime": get_google_from_dt(end), "timeZone": get_timezone()}
+            }
         svc = self.calendar.service()
         svc.events().patch(
             calendarId=self.calendar.calendar_id,
             eventId=self.event_id,
-            body={
-                "start": {"dateTime": get_google_from_dt(start), "timeZone": get_timezone()},
-                "end": {"dateTime": get_google_from_dt(end), "timeZone": get_timezone()}
-            },
+            body=event,
             sendUpdates="all"
         ).execute()
-        self.start, self.end = start, end
+
+        self.start, self.end = todt(start), todt(end)
 
 
 if __name__ == '__main__':
