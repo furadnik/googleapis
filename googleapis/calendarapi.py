@@ -258,6 +258,13 @@ class Calendar:
         """Return iterator."""
         return self.list_events()
 
+    def delte_event(self, event: Event) -> None:
+        """Delete an event."""
+        service().events().delete(
+            calendarId=self.calendar_id,
+            eventId=event.event_id
+        ).execute()
+
 
 class AttendanceStatus(StrEnum):
     """Event status enum."""
