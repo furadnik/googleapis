@@ -211,7 +211,7 @@ class Calendar:
         if location:
             event["location"] = location
         if color:
-            event["colorId"] = str(color)
+            event["colorId"] = str(color.value)
 
         response = service().events().insert(calendarId=self.calendar_id,
                                              body=event).execute()
