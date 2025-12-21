@@ -5,7 +5,7 @@ import datetime
 import pathlib
 import time
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum, StrEnum
 from functools import partial
 from subprocess import PIPE, Popen
 from typing import Iterable, Iterator, Optional, Union
@@ -13,6 +13,22 @@ from typing import Iterable, Iterator, Optional, Union
 import pytz
 
 from . import googleapi
+
+
+class EventColor(Enum):
+    """Event color enum."""
+
+    blue = 1
+    green = 2
+    purple = 3
+    red = 4
+    yellow = 5
+    orange = 6
+    turquoise = 7
+    gray = 8
+    bold_blue = 9
+    bold_green = 10
+    bold_red = 11
 
 
 def get_timezone() -> str:
@@ -173,7 +189,7 @@ class Calendar:
     def create_event(self, name: str,
                      start: datetime.datetime | datetime.date, end: datetime.datetime | datetime.date | None = None,
                      description: Optional[str] = None, location: Optional[str] = None,
-                     color: Union[str, int, None] = None, all_day: bool | None = None
+                     color: Union[str, int, EventColor, None] = None, all_day: bool | None = None
                      ) -> Event:
         """Create a Calendar Event."""
         tz = get_timezone()
@@ -294,7 +310,7 @@ class Event:
     start: datetime.datetime
     end: datetime.datetime
     all_day: bool
-    color: int | None
+    color: EventColor | None
     location: str | None
     by_me: bool
     attendance_status: AttendanceStatus
@@ -309,7 +325,7 @@ class Event:
         attendance_status = _get_event_status(data)
         return Event(calendar, data["id"], data["summary"],
                      start, end, "date" in data["start"].keys(),
-                     color=(data["color"] if "color" in data.keys() else None),
+                     color=(EventColor(data["color"]) if "color" in data.keys() else None),
                      location=(data["location"] if "location" in data.keys() else None),
                      by_me=by_me, attendance_status=attendance_status,
                      organizer=data["organizer"]["email"]
