@@ -325,7 +325,7 @@ class Event:
         attendance_status = _get_event_status(data)
         return Event(calendar, data["id"], data["summary"],
                      start, end, "date" in data["start"].keys(),
-                     color=(EventColor(data["color"]) if "color" in data.keys() else None),
+                     color=(EventColor(int(data["colorId"])) if "colorId" in data.keys() else None),
                      location=(data["location"] if "location" in data.keys() else None),
                      by_me=by_me, attendance_status=attendance_status,
                      organizer=data["organizer"]["email"]
@@ -436,9 +436,4 @@ class Event:
 
 if __name__ == '__main__':
     for event in Calendar():
-        print(event.attendees)
-        if len(event.attendees) <= 1:
-            continue
-        print(event)
-        print(event.attendees)
-        print(event.attendee_statuses)
+        print(event.color)
