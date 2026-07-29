@@ -31,10 +31,11 @@ class EventColor(Enum):
     bold_red = 11
 
 
-def get_timezone() -> str:
+def get_timezone() -> pytz.timezone:
     """Get current timezone."""
-    return Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
-                 ).stdout.read().decode().strip() or "Europe/Prague"  # type: ignore
+    tz = Popen("timedatectl show | grep 'Timezone=' | cut -d= -f2", shell=True, stdout=PIPE  # nosec
+               ).stdout.read().decode().strip() or "Europe/Prague"  # type: ignore
+    return pytz.timezone(tz)
 
 
 def now():
@@ -168,8 +169,14 @@ def import_from_ics(file_name):
 def strip_timezone(aware: datetime.datetime) -> datetime.datetime:
     """Strip timezone from dt."""
     tz = get_timezone()
-    local = aware.astimezone(pytz.timezone(tz))
+    local = aware.astimezone(tz)
     return local.replace(tzinfo=None)
+
+
+def add_timezone(unaware: datetime.datetime) -> datetime.datetime:
+    """Add timezone to dt."""
+    tz = get_timezone()
+    return tz.localize(unaware)
 
 
 service = googleapi.Service('calendar')
@@ -437,3 +444,5 @@ class Event:
 if __name__ == '__main__':
     for event in Calendar():
         print(event.color)
+        print(event.start)
+        print(add_timezone(event.start))
