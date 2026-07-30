@@ -427,8 +427,8 @@ class Event:
             }
         else:
             event = {
-                "start": {"dateTime": get_google_from_dt(start), "timeZone": get_timezone()},
-                "end": {"dateTime": get_google_from_dt(end), "timeZone": get_timezone()}
+                "start": {"dateTime": get_google_from_dt(start), "timeZone": str(get_timezone())},
+                "end": {"dateTime": get_google_from_dt(end), "timeZone": str(get_timezone())}
             }
         svc = self.calendar.service()
         svc.events().patch(
