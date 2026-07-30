@@ -127,8 +127,8 @@ def create_event(
         end = start + datetime.timedelta(hours=1)
     event = {
         'summary': name,
-        'start': {'dateTime': get_google_from_dt(start), "timeZone": tz},
-        'end': {'dateTime': get_google_from_dt(end), "timeZone": tz},
+        'start': {'dateTime': get_google_from_dt(start), "timeZone": str(tz)},
+        'end': {'dateTime': get_google_from_dt(end), "timeZone": str(tz)},
     }
     if all_day:
         event["start"] = {"date": datetime.datetime.strftime(todt(start), "%Y-%m-%d")}
