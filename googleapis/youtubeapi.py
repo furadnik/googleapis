@@ -1,6 +1,9 @@
 from __future__ import annotations, print_function
 
 from functools import cached_property
+from typing import Iterator
+
+import requests
 
 from . import googleapi
 
@@ -75,3 +78,35 @@ class Video:
     def __eq__(self, other: Video) -> bool:
         """Compare two videos."""
         return self.id == other.id
+
+
+def get_videos_from_user(user: str) -> Iterator[Video]:
+    """Get new videos from a user (by id)."""
+    response = requests.get("https://www.youtube.com/feeds/videos.xml?channel_id=" + user,
+                            timeout=30).text.split('<link rel="alternate" href="')[2:]
+    return (
+        Video(x.split('"')[0].replace('https://www.youtube.com/watch?v=', '').replace("https://www.youtube.com/shorts/", ""))
+        for x in reversed(response)
+    )
+
+
+def get_subscription_ids() -> Iterator[str]:
+    """Get the IDs of channels the user is subscribed to."""
+    page_token = None
+    while True:
+        response = service.subscriptions().list(
+            part='snippet',
+            pageToken=page_token,
+            mine=True,
+            order="alphabetical",
+            fields='nextPageToken,items(id,snippet(title,resourceId(channelId)))'
+        ).execute()
+        yield from (item["id"] for item in response["items"])
+        page_token = response.get("nextPageToken", None)
+        if page_token is None:
+            return
+
+
+if __name__ == '__main__':
+    for sub in get_subscription_ids():
+        print(sub)
